@@ -1,0 +1,35 @@
+CAPI=2:
+
+name: AFRL:bus:up_wishbone_pipeline:1.0.0
+description: Wishbone pipeline slave to Analog Devices uP interface
+
+filesets:
+  src:
+    files:
+      - src/up_wishbone_pipeline.v
+    file_type: verilogSource
+  
+  tb:
+    files:
+      - tb/tb_wishbone_slave.v
+    file_type: verilogSource
+    
+  dep:
+    depend:
+      - AFRL:utility:helper:1.0.0
+      
+  dep_tb:
+    depend:
+      - AFRL:utility:sim_helper
+    
+targets:
+  default: &default
+    description: Default for IP intergration.
+    filesets: [src, dep]
+  
+  sim: &sim
+    <<: *default
+    description: Base simulation using icarus as default.
+    default_tool: icarus
+    filesets_append: [tb, dep_tb]
+    toplevel: tb_wishbone_slave
