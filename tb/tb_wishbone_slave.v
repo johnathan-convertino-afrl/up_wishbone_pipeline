@@ -28,10 +28,7 @@
 
 `timescale 1 ns/10 ps
 
-module tb_wishbone_slave #(
-  parameter IN_FILE_NAME = "in.bin",
-  parameter OUT_FILE_NAME = "out.bin",
-  parameter RAND_READY = 0);
+module tb_wishbone_slave ();
   
   reg         tb_data_clk = 0;
   reg         tb_rst = 0;
@@ -63,6 +60,8 @@ module tb_wishbone_slave #(
   wire [13:0] up_waddr;
   wire [13:0] up_raddr;
   wire [31:0] up_wdata;
+  wire tb_rack;
+  wire tb_wack;
   
   //1ns
   localparam CLK_PERIOD = 20;
@@ -76,8 +75,8 @@ module tb_wishbone_slave #(
   localparam CONTROL_REG = 14'hC;
 
   //device under test
-  up_wishbone #(
-    .WISHBONE_ADDRESS_WIDTH(16)
+  up_wishbone_pipeline #(
+    .ADDRESS_WIDTH(16)
   ) dut (
     //clk reset
     .clk(tb_data_clk),
@@ -88,18 +87,18 @@ module tb_wishbone_slave #(
     .s_wb_we(r_wb_we),
     .s_wb_addr(r_wb_addr),
     .s_wb_data_i(r_wb_data_o),
-    .s_wb_sel_i(r_wb_sel_o),
+    .s_wb_sel(r_wb_sel_o),
     .s_wb_ack(tb_wb_ack),
     .s_wb_data_o(tb_wb_data_i),
     //uP
     //read interface
     .up_rreq(up_rreq),
-    .up_rack(r_up_rack),
+    .up_rack(tb_rack),
     .up_raddr(up_raddr),
     .up_rdata(r_up_rdata),
     //write interface
     .up_wreq(up_wreq),
-    .up_wack(r_up_wack),
+    .up_wack(tb_wack),
     .up_waddr(up_waddr),
     .up_wdata(up_wdata)
   );
@@ -143,10 +142,10 @@ module tb_wishbone_slave #(
       r_wb_sel_o <= ~0;
     end else begin
       r_wb_cyc <= 1'b1;
-      r_wb_stb <= 1'b1;
-      r_wb_we  <= 1'b1;
+      r_wb_stb <= $random%2;
+      r_wb_we  <= 1'b0;
 
-      if(tb_wb_ack == 1'b1)
+      if(tb_wb_ack == 1'b1 && r_wb_stb == 1'b1)
       begin
         r_wb_addr <= r_wb_addr + 'h4;
 
@@ -156,6 +155,9 @@ module tb_wishbone_slave #(
       r_wb_sel_o <= r_wb_sel_o;
     end
   end
+
+  assign tb_rack = r_up_rack & up_rreq;
+  assign tb_wack = r_up_wack & up_wreq;
 
   //up registers decoder
   always @(posedge tb_data_clk)

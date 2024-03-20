@@ -32,7 +32,7 @@
 
 module up_wishbone_pipeline #(
     parameter ADDRESS_WIDTH = 16,
-    parameter BUS_WIDTH     = 4,
+    parameter BUS_WIDTH     = 4
   ) 
   (
     //clk reset
@@ -47,7 +47,7 @@ module up_wishbone_pipeline #(
     input   [ 3:0]                        s_wb_sel,
     output                                s_wb_ack,
     output                                s_wb_stall,
-    output  [BUS_WIDHT*8-1:0]             s_wb_data_o,
+    output  [BUS_WIDTH*8-1:0]             s_wb_data_o,
     //uP
     //read interface
     output                                up_rreq,
@@ -64,6 +64,7 @@ module up_wishbone_pipeline #(
   genvar index;
 
   wire valid;
+  wire up_ack;
 
   reg r_up_rreq;
   reg r_up_wreq;
@@ -73,26 +74,31 @@ module up_wishbone_pipeline #(
   assign valid = s_wb_cyc & s_wb_stb;
 
   //if we have not ack'd, cyc is active stall the bus
-  assign s_wb_stall = ~(up_rack | up_wack) & s_wb_cyc & ~r_rst[0];
+  assign s_wb_stall = ~up_ack & s_wb_cyc & ~r_rst[0];
 
   //Convert wishbone requests to up requests
   assign up_rreq  = (r_up_rreq ? r_up_rreq & s_wb_cyc: valid & ~s_wb_we & ~r_rst[0]);
   assign up_wreq  = (r_up_wreq ? r_up_wreq & s_wb_cyc: valid & s_wb_we & ~r_rst[0]);
   //ack is ack for both, or them so either may pass
-  assign s_wb_ack = (up_rack | up_wack) & ~r_rst[0];
+  assign up_ack = (up_rack | up_wack);
+  assign s_wb_ack = up_ack & ~r_rst[0];
 
   //assign address to correct port if selected
   assign up_raddr = (~s_wb_we & ~r_rst[0] ? s_wb_addr: 0);
   assign up_waddr = ( s_wb_we & ~r_rst[0] ? s_wb_addr : 0);
 
-  //output data is 1:1
-  assign s_wb_data_o = (r_rst[0] ? 0 : up_rdata);
-
   //part select isn't actually supported, since uP interface does not support it. Sending 0 instead.
   generate
     for(index = 0; index < 4; index = index + 1)
     begin
-      assign up_wdata[((index+1)*8)-1:index*8] = (r_rst[0] | ~s_wb_sel[index] ? 0 : s_wb_data_i[((index+1)*8)-1:index*8]);
+      assign up_wdata[((index+1)*8)-1:index*8] = (r_rst[0] | ~s_wb_sel[index] ? 8'hZZ : s_wb_data_i[((index+1)*8)-1:index*8]);
+    end
+  endgenerate
+
+  generate
+    for(index = 0; index < 4; index = index + 1)
+    begin
+      assign s_wb_data_o[((index+1)*8)-1:index*8] = (r_rst[0] |  ~s_wb_sel[index] ? 8'hZZ : up_rdata[((index+1)*8)-1:index*8]);
     end
   endgenerate
 
@@ -109,7 +115,7 @@ module up_wishbone_pipeline #(
       r_up_wreq <= 1'b0;
 
       //when cyc is high and stb isn't register signal to keep previous state
-      if(s_wb_cyc & ~s_wb_stb)
+      if(s_wb_cyc & ~s_wb_stb & ~up_ack)
       begin
         r_up_rreq <= r_up_rreq;
         r_up_wreq <= r_up_wreq;
