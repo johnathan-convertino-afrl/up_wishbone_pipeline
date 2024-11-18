@@ -1,0 +1,1 @@
+﻿NDSearch.OnPrefixDataLoaded("s_w",["Variable"],[["s_wb_ack",,[["up_wishbone_pipeline",,,,0,"File:up_wishbone_pipeline.v:up_wishbone_pipeline.s_wb_ack","SystemVerilogModule:up_wishbone_pipeline:s_wb_ack"]]],["s_wb_stall",,[["up_wishbone_pipeline",,,,0,"File:up_wishbone_pipeline.v:up_wishbone_pipeline.s_wb_stall","SystemVerilogModule:up_wishbone_pipeline:s_wb_stall"]]]]);
