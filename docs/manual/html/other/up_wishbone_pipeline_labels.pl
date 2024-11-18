@@ -3,7 +3,7 @@
 
 
 $key = q/Module_Documentation/;
-$external_labels{$key} = "$URL/" . q|up_wishbone_classic_node18.html|; 
+$external_labels{$key} = "$URL/" . q|up_wishbone_pipeline_node18.html|; 
 $noresave{$key} = "$nosave";
 
 1;
