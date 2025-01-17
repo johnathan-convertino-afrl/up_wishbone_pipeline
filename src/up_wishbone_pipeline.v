@@ -72,26 +72,28 @@ module up_wishbone_pipeline #(
     parameter BUS_WIDTH     = 4
   ) 
   (
-    input                                 clk,
-    input                                 rst,
-    input                                 s_wb_cyc,
-    input                                 s_wb_stb,
-    input                                 s_wb_we,
-    input   [ADDRESS_WIDTH-1:0]           s_wb_addr,
-    input   [BUS_WIDTH*8-1:0]             s_wb_data_i,
-    input   [ 3:0]                        s_wb_sel,
-    output                                s_wb_ack,
-    output                                s_wb_stall,
-    output  [BUS_WIDTH*8-1:0]             s_wb_data_o,
-    output                                up_rreq,
-    input                                 up_rack,
-    output  [ADDRESS_WIDTH-1:0]           up_raddr,
-    input   [BUS_WIDTH*8-1:0]             up_rdata,
-    output                                up_wreq,
-    input                                 up_wack,
-    output  [ADDRESS_WIDTH-1:0]           up_waddr,
-    output  [BUS_WIDTH*8-1:0]             up_wdata
+    input                                           clk,
+    input                                           rst,
+    input                                           s_wb_cyc,
+    input                                           s_wb_stb,
+    input                                           s_wb_we,
+    input   [ADDRESS_WIDTH-1:0]                     s_wb_addr,
+    input   [BUS_WIDTH*8-1:0]                       s_wb_data_i,
+    input   [ 3:0]                                  s_wb_sel,
+    output                                          s_wb_ack,
+    output                                          s_wb_stall,
+    output  [BUS_WIDTH*8-1:0]                       s_wb_data_o,
+    output                                          up_rreq,
+    input                                           up_rack,
+    output  [ADDRESS_WIDTH-(ADDRESS_WIDTH/16)-1:0]  up_raddr,
+    input   [BUS_WIDTH*8-1:0]                       up_rdata,
+    output                                          up_wreq,
+    input                                           up_wack,
+    output  [ADDRESS_WIDTH-(ADDRESS_WIDTH/16)-1:0]  up_waddr,
+    output  [BUS_WIDTH*8-1:0]                       up_wdata
   );
+
+  localparam shift         = ADDRESS_WIDTH/16;
 
   genvar index;
 
@@ -129,11 +131,11 @@ module up_wishbone_pipeline #(
 
   // var: up_raddr
   // assign wishbone address to read port if selected
-  assign up_raddr = (~s_wb_we & ~r_rst[0] ? s_wb_addr: 0);
+  assign up_raddr = (~s_wb_we & ~r_rst[0] ? s_wb_addr[ADDRESS_WIDTH-1:shift] : 0);
 
   // var: up_waddr
   // assign wishbone address to write port if selected
-  assign up_waddr = ( s_wb_we & ~r_rst[0] ? s_wb_addr : 0);
+  assign up_waddr = ( s_wb_we & ~r_rst[0] ? s_wb_addr[ADDRESS_WIDTH-1:shift] : 0);
 
   //part select write
   //part select isn't supported by the uP interface. Needs to be added outside the core to the device if needed.
